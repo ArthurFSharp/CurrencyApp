@@ -2,14 +2,16 @@
 
 open FSharp.Data
 open FSharp.Data.JsonExtensions
+open System.Net
 
 type CurrencyService() =
 
     let baseUrl = "https://free.currencyconverterapi.com/api/v6/"
+    let wc = new WebClient()
 
     let loadJson(url) =
         async {
-            let! json = Http.AsyncRequestString(baseUrl + url)
+            let json = wc.DownloadString(baseUrl + url)
             return JsonValue.Parse(json)
         }
 

@@ -5,6 +5,9 @@ open Fabulous.DynamicViews
 open CurrencyApp.Controls
 
 module Style =
+    let mkCentralLabel text =
+        View.Label(text=text, horizontalOptions=LayoutOptions.Center, verticalOptions=LayoutOptions.CenterAndExpand)
+
     let mkFormLabel text =
         View.Label(text=text, margin=new Thickness(0., 20., 0., 5.))
 

@@ -21,6 +21,7 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <PackageReference Include="FSharp.Data" Version="2.4.6" />
     <PackageReference Include="Xamarin.Forms" Version="3.2.0.839982" />
     <PackageReference Include="Xamarin.Forms.Platform.WPF" Version="3.2.0.839982" />
     <PackageReference Include="Fabulous.Core" Version="0.22.0" />
