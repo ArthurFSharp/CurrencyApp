@@ -10,52 +10,79 @@ module App =
     type Model = 
       { 
         Price: double 
-        Currencies: seq<string>
+        Currencies: seq<string> option
 
         CurrencyService: CurrencyService
       }
 
     type Msg = 
         | UpdatePrice of string
+
+        | CurrenciesLoaded of seq<string>
         
         | ComputeCurrency
+
+    let loadCurrencies (currencyService : CurrencyService) = async {
+        let! currencies = currencyService.GetAllCurrencies()
+        return CurrenciesLoaded currencies
+    }
 
     let initModel currencyService =
         { 
             Price = 0.; 
-            Currencies = [||]; 
+            Currencies = None;
             CurrencyService = currencyService
         }
 
     let init currencyService () =
-        (initModel currencyService), Cmd.none
+        (initModel currencyService),
+        Cmd.ofAsyncMsg (loadCurrencies currencyService)
 
     let update msg model =
         match msg with
         | UpdatePrice price ->
             { model with Price = double price}, Cmd.none
+
+        | CurrenciesLoaded currencies ->
+            { model with Currencies = Some currencies}, Cmd.none
         
         | ComputeCurrency ->
             model, Cmd.none
 
-    let view (model: Model) dispatch =
-        View.ContentPage(
-          title = "CurrencyApp",
-          content = View.StackLayout(padding = 20.0, verticalOptions = LayoutOptions.Center,
-            children = [ 
-                View.Grid(
-                    coldefs = [ 100.; GridLength.Star ],
-                    columnSpacing = 10.,
-                    children = [
-                        yield (Style.mkFormLabel "Saisissez un prix : ").VerticalOptions(LayoutOptions.Center)
-                        yield (Style.mkFormEntry "prix" "" Keyboard.Numeric true (UpdatePrice >> dispatch)).GridColumn(1)
-                    ])
-                View.Picker(model.Currencies, title = "Sélectionnez une devise")
-                View.Label("Vers")
-                View.Picker([ "Euro (€)"; "US Dollar ($)" ], title = "Sélectionnez une devise")
-                View.Button("Convertir", command = (fun () -> dispatch ComputeCurrency))
-                View.Label("Résultat")
-            ]))
+    let view model dispatch =
+        let title = "CurrencyApp"
+        
+        match model.Currencies with
+        | None ->
+            dependsOn () (fun model () ->
+                View.ContentPage(
+                    title=title,
+                    content=View.StackLayout(
+                        children=[Style.mkCentralLabel "Chargement..." ]
+                    )
+                )
+            )
+        | Some currencies ->
+            dependsOn () (fun model () ->
+                View.ContentPage(
+                  title = title,
+                  content = View.StackLayout(padding = 20.0, verticalOptions = LayoutOptions.Center,
+                    children = [ 
+                        View.Grid(
+                            coldefs = [ 100.; GridLength.Star ],
+                            columnSpacing = 10.,
+                            children = [
+                                yield (Style.mkFormLabel "Saisissez un prix : ").VerticalOptions(LayoutOptions.Center)
+                                yield (Style.mkFormEntry "prix" "" Keyboard.Numeric true (UpdatePrice >> dispatch)).GridColumn(1)
+                            ])
+                        View.Picker(currencies, title = "Sélectionnez une devise")
+                        View.Label("Vers")
+                        View.Picker(currencies, title = "Sélectionnez une devise")
+                        View.Button("Convertir", command = (fun () -> dispatch ComputeCurrency))
+                        View.Label("Résultat")
+                    ]))
+            )
+        
             
     let program service = Program.mkProgram (service |> init) update view
 
