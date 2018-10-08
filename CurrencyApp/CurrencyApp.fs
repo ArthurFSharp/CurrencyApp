@@ -11,6 +11,7 @@ module App =
       { 
         Price: double 
         Currencies: seq<string> option
+        ComputedPrice: double
 
         CurrencyService: CurrencyService
       }
@@ -22,16 +23,24 @@ module App =
         
         | ComputeCurrency
 
+        | ComputeDone of float
+
     let loadCurrencies (currencyService : CurrencyService) = async {
         let! currencies = currencyService.GetAllCurrencies()
         return CurrenciesLoaded currencies
+    }
+
+    let computeCurrencyAsync (currencyService : CurrencyService) price = async {
+        let! convertionRate = currencyService.GetConversionRate "USD" "EUR"
+        return ComputeDone (price * convertionRate)
     }
 
     let initModel currencyService =
         { 
             Price = 0.; 
             Currencies = None;
-            CurrencyService = currencyService
+            ComputedPrice = 0.;
+            CurrencyService = currencyService;
         }
 
     let init currencyService () =
@@ -44,17 +53,20 @@ module App =
             { model with Price = double price}, Cmd.none
 
         | CurrenciesLoaded currencies ->
-            { model with Currencies = Some currencies}, Cmd.none
+            { model with Currencies = Some currencies }, Cmd.none
         
         | ComputeCurrency ->
-            model, Cmd.none
+            model, Cmd.ofAsyncMsg (computeCurrencyAsync model.CurrencyService model.Price)
+
+        | ComputeDone price ->
+            { model with ComputedPrice = price }, Cmd.none
 
     let view model dispatch =
         let title = "CurrencyApp"
         
         match model.Currencies with
         | None ->
-            dependsOn () (fun model () ->
+            dependsOn () (fun m () ->
                 View.ContentPage(
                     title=title,
                     content=View.StackLayout(
@@ -63,7 +75,7 @@ module App =
                 )
             )
         | Some currencies ->
-            dependsOn () (fun model () ->
+            dependsOn () (fun m () ->
                 View.ContentPage(
                   title = title,
                   content = View.StackLayout(padding = 20.0, verticalOptions = LayoutOptions.Center,
@@ -73,13 +85,13 @@ module App =
                             columnSpacing = 10.,
                             children = [
                                 yield (Style.mkFormLabel "Saisissez un prix : ").VerticalOptions(LayoutOptions.Center)
-                                yield (Style.mkFormEntry "prix" "" Keyboard.Numeric true (UpdatePrice >> dispatch)).GridColumn(1)
+                                yield (Style.mkFormEntry "prix" "0" Keyboard.Numeric true (UpdatePrice >> dispatch)).GridColumn(1)
                             ])
                         View.Picker(currencies, title = "Sélectionnez une devise")
                         View.Label("Vers")
                         View.Picker(currencies, title = "Sélectionnez une devise")
                         View.Button("Convertir", command = (fun () -> dispatch ComputeCurrency))
-                        View.Label("Résultat")
+                        View.Label (text = sprintf "Calcul: %f" model.ComputedPrice, horizontalOptions = LayoutOptions.Center)
                     ]))
             )
         

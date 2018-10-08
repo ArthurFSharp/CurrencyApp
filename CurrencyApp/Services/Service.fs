@@ -31,5 +31,5 @@ type CurrencyService() =
         async {
             let! data = loadJson("convert?q=" + fromCurrency + "_" + toCurrency + "&compact=y")
             let _, rate = data.Properties.[0]
-            return data?``val``.AsFloat()
+            return rate?``val``.AsFloat()
         }
