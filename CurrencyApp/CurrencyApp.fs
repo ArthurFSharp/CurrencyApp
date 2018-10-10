@@ -11,7 +11,10 @@ module App =
       { 
         Price: double 
         Currencies: seq<string> option
-        ComputedPrice: double
+        ComputedPrice: float
+
+        SelectedFromCurrency: int
+        SelectedToCurrency: int
 
         CurrencyService: CurrencyService
       }
@@ -20,6 +23,9 @@ module App =
         | UpdatePrice of string
 
         | CurrenciesLoaded of seq<string>
+
+        | FromCurrency of int
+        | ToCurrency of int
         
         | ComputeCurrency
 
@@ -30,8 +36,10 @@ module App =
         return CurrenciesLoaded currencies
     }
 
-    let computeCurrencyAsync (currencyService : CurrencyService) price = async {
-        let! convertionRate = currencyService.GetConversionRate "USD" "EUR"
+    let computeCurrencyAsync (currencyService : CurrencyService) price indexFromCurrency indexToCurrency = async {
+        let! currencyFrom = currencyService.GetCurrencyAtIndex indexFromCurrency
+        let! currencyTo = currencyService.GetCurrencyAtIndex indexToCurrency
+        let! convertionRate = currencyService.GetConversionRate currencyFrom currencyTo
         return ComputeDone (price * convertionRate)
     }
 
@@ -40,6 +48,8 @@ module App =
             Price = 0.; 
             Currencies = None;
             ComputedPrice = 0.;
+            SelectedFromCurrency = 0;
+            SelectedToCurrency = 0;
             CurrencyService = currencyService;
         }
 
@@ -50,13 +60,18 @@ module App =
     let update msg model =
         match msg with
         | UpdatePrice price ->
-            { model with Price = double price}, Cmd.none
+            { model with Price = float price}, Cmd.none
 
         | CurrenciesLoaded currencies ->
             { model with Currencies = Some currencies }, Cmd.none
+
+        | FromCurrency index ->
+            { model with SelectedFromCurrency = index }, Cmd.none
+        | ToCurrency index ->
+            { model with SelectedToCurrency = index }, Cmd.none
         
         | ComputeCurrency ->
-            model, Cmd.ofAsyncMsg (computeCurrencyAsync model.CurrencyService model.Price)
+            model, Cmd.ofAsyncMsg (computeCurrencyAsync model.CurrencyService model.Price model.SelectedFromCurrency model.SelectedToCurrency)
 
         | ComputeDone price ->
             { model with ComputedPrice = price }, Cmd.none
@@ -87,9 +102,9 @@ module App =
                                 yield (Style.mkFormLabel "Saisissez un prix : ").VerticalOptions(LayoutOptions.Center)
                                 yield (Style.mkFormEntry "prix" "0" Keyboard.Numeric true (UpdatePrice >> dispatch)).GridColumn(1)
                             ])
-                        View.Picker(currencies, title = "Sélectionnez une devise")
+                        Style.mkFormPicker "Sélectionnez une devise" currencies model.SelectedFromCurrency (FromCurrency >> dispatch)
                         View.Label("Vers")
-                        View.Picker(currencies, title = "Sélectionnez une devise")
+                        Style.mkFormPicker "Sélectionnez une devise" currencies model.SelectedToCurrency (ToCurrency >> dispatch)
                         View.Button("Convertir", command = (fun () -> dispatch ComputeCurrency))
                         View.Label (text = sprintf "Calcul: %f" model.ComputedPrice, horizontalOptions = LayoutOptions.Center)
                     ]))
