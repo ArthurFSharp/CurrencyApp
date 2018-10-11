@@ -81,17 +81,14 @@ module App =
         
         match model.Currencies with
         | None ->
-            dependsOn () (fun m () ->
-                View.ContentPage(
+            View.ContentPage(
                     title=title,
                     content=View.StackLayout(
                         children=[Style.mkCentralLabel "Chargement..." ]
                     )
                 )
-            )
         | Some currencies ->
-            dependsOn () (fun m () ->
-                View.ContentPage(
+            View.ContentPage(
                   title = title,
                   content = View.StackLayout(padding = 20.0, verticalOptions = LayoutOptions.Center,
                     children = [ 
@@ -106,9 +103,8 @@ module App =
                         View.Label("Vers")
                         Style.mkFormPicker "Sélectionnez une devise" currencies model.SelectedToCurrency (ToCurrency >> dispatch)
                         View.Button("Convertir", command = (fun () -> dispatch ComputeCurrency))
-                        View.Label (text = sprintf "Calcul: %f" model.ComputedPrice, horizontalOptions = LayoutOptions.Center)
+                        View.Label (text = (sprintf "Calcul: %f" model.ComputedPrice), horizontalOptions = LayoutOptions.Center)
                     ]))
-            )
         
             
     let program service = Program.mkProgram (service |> init) update view
