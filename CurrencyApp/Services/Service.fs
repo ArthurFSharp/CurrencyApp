@@ -3,12 +3,20 @@
 open FSharp.Data
 open FSharp.Data.JsonExtensions
 open System.Net
+open Newtonsoft.Json
+
+type CurrencyModel =
+        {
+            CurrencyName: string
+            CurrencySymbol: string
+            Id: string
+        }
 
 type CurrencyService() =
 
     let baseUrl = "https://free.currencyconverterapi.com/api/v6/"
     let wc = new WebClient()
-
+    
     let loadJson(url) =
         async {
             let json = wc.DownloadString(baseUrl + url)
@@ -18,9 +26,9 @@ type CurrencyService() =
     member this.GetAllCurrencies () =
         async {
             let! data = loadJson("currencies")
-            let s = data?results.Properties
-                    |> Seq.map (fun (code, country) -> code + " (" + country?currencyName.ToString() + ")")
-            return s
+            let results = data?results
+            let currencies = JsonConvert.DeserializeObject<Map<string, CurrencyModel>>(results.ToString()) |> Map.toSeq
+            return currencies
         }
     
     member this.GetCurrencyAtIndex index = async {
@@ -28,7 +36,6 @@ type CurrencyService() =
         let (code, _) = data?results.Properties.[index]
         return code
     }
-        
 
     member this.GetConversionRate fromCurrency toCurrency =
         async {
