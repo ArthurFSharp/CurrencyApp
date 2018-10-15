@@ -103,7 +103,7 @@ module App =
                         View.Label("Vers")
                         Style.mkFormPicker "Sélectionnez une devise" currencies model.SelectedToCurrency (ToCurrency >> dispatch)
                         View.Button("Convertir", command = (fun () -> dispatch ComputeCurrency))
-                        View.Label (text = (sprintf "Calcul: %f" model.ComputedPrice), horizontalOptions = LayoutOptions.Center)
+                        View.Label (text = (sprintf "Calcul: %A" model.ComputedPrice), horizontalOptions = LayoutOptions.CenterAndExpand, widthRequest = 200.)
                     ]))
         
             
