@@ -23,13 +23,16 @@ type CurrencyService() =
             return s
         }
     
-    member this.GetCurrencyAtIndex currencies index =
-        let (code, _) = currencies?results.Properties.[index]
-        code
+    member this.GetCurrencyAtIndex index = async {
+        let! data = loadJson("currencies")
+        let (code, _) = data?results.Properties.[index]
+        return code
+    }
+        
 
     member this.GetConversionRate fromCurrency toCurrency =
         async {
             let! data = loadJson("convert?q=" + fromCurrency + "_" + toCurrency + "&compact=y")
             let _, rate = data.Properties.[0]
-            return data?``val``.AsFloat()
+            return rate?``val``.AsFloat()
         }

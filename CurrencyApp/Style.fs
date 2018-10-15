@@ -14,4 +14,7 @@ module Style =
     let mkFormEntry placeholder text keyboard isValid textChanged =
         View.BorderedEntry(placeholder=placeholder, text=text, keyboard=keyboard, textChanged=(fun e -> e.NewTextValue |> textChanged),
                            borderColor=(match isValid with true -> Color.Default | false -> Color.Red))
+    
+    let mkFormPicker title itemsSource selectedIndex selectedIndexChanged =
+        View.Picker(title = title, itemsSource = itemsSource, selectedIndex = selectedIndex, selectedIndexChanged=(fun e -> fst e |> selectedIndexChanged))
 
