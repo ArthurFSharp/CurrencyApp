@@ -30,12 +30,6 @@ type CurrencyService() =
             let currencies = JsonConvert.DeserializeObject<Map<string, CurrencyModel>>(results.ToString()) |> Map.toSeq
             return currencies
         }
-    
-    member this.GetCurrencyAtIndex index = async {
-        let! data = loadJson("currencies")
-        let (code, _) = data?results.Properties.[index]
-        return code
-    }
 
     member this.GetConversionRate fromCurrency toCurrency =
         async {
