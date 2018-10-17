@@ -98,12 +98,11 @@ module App =
                     children = [ 
                         View.Image(source="https://cdn2.iconfinder.com/data/icons/e-commerce-icons-2/256/Ecommerce_Icons_Rose_Color-47-128.png", heightRequest = 128., widthRequest = 128., horizontalOptions = LayoutOptions.Center)
                         View.Grid(
-                            heightRequest = 30.,
                             coldefs = [ 100.; GridLength.Star ],
                             columnSpacing = 10.,
                             children = [
                                 yield (Style.mkFormLabel "Saisissez un prix : ")
-                                yield (Style.mkFormEntry "prix" "0" Keyboard.Numeric true (UpdatePrice >> dispatch)).GridColumn(1)
+                                yield (Style.mkFormEntry "prix" "0" Keyboard.Numeric true (UpdatePrice >> dispatch)).GridColumn(1).HeightRequest(30.)
                             ])
                         Style.mkFormPicker "Sélectionnez une devise" (Seq.map (fun c -> sprintf "%s - %s" (snd c).Id (snd c).CurrencyName) currencies) model.SelectedFromCurrency (FromCurrency >> dispatch)
                         View.Label("Vers")
